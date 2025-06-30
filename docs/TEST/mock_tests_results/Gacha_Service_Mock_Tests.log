@@ -1,0 +1,66 @@
+newman
+
+Gacha Market Service - User Gacha Collection Tests
+
+→ Retrieve All Gachas for a Player (GET)
+  GET http://localhost:5002/gacha_service/players/1/gachas [200 OK, 404B, 17ms]
+  ✓  Status code is 200
+  ✓  Response is an array
+  ✓  Each gacha has necessary fields
+
+→ Get Details of a Specific Gacha
+  GET http://localhost:5002/gacha_service/players/1/gachas/101 [200 OK, 286B, 6ms]
+  ✓  Status code is 200
+  ✓  Response contains gacha details
+
+→ Add a Gacha to Player Collection
+  POST http://localhost:5002/gacha_service/players/1/gachas [201 CREATED, 209B, 5ms]
+  ✓  Status code is 201
+  ✓  Response contains success message
+
+→ Get Missing Gachas for a Player
+  GET http://localhost:5002/gacha_service/players/1/gachas/missing [200 OK, 204B, 4ms]
+  ✓  Status code is 200
+  ✓  Response contains an array
+  ✓  Each missing gacha has the required properties
+
+→ Update Gacha Ownership
+  PATCH http://localhost:5002/gacha_service/players/2/gachas/103/update_owner [200 OK, 216B, 4ms]
+  ✓  Status code is 200
+  ✓  Response contains success message
+
+→ Update Gacha for All Users
+  PATCH http://localhost:5002/gacha_service/admin/update_all/103 [200 OK, 220B, 4ms]
+  ✓  Status code is 200
+  ✓  Response contains success message
+
+→ Delete All Gachas for a Player (DELETE)
+  DELETE http://localhost:5002/gacha_service/players/1/gachas [200 OK, 217B, 5ms]
+  ✓  Status code is 200
+  ✓  Response contains success message
+
+→ Get All Gacha Collections (Admin Only)
+  GET http://localhost:5002/gacha_service/admin/collections [200 OK, 424B, 6ms]
+  ✓  Status code is 200
+  ✓  Response is an array
+  ✓  Each gacha collection contains required fields
+
+┌─────────────────────────┬─────────────────┬─────────────────┐
+│                         │        executed │          failed │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              iterations │               1 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│                requests │               8 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│            test-scripts │               8 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│      prerequest-scripts │               0 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              assertions │              19 │               0 │
+├─────────────────────────┴─────────────────┴─────────────────┤
+│ total run duration: 144ms                                   │
+├─────────────────────────────────────────────────────────────┤
+│ total data received: 852B (approx)                          │
+├─────────────────────────────────────────────────────────────┤
+│ average response time: 6ms [min: 4ms, max: 17ms, s.d.: 4ms] │
+└─────────────────────────────────────────────────────────────┘
