@@ -1,0 +1,200 @@
+services:
+  authentication:
+    build:
+      context: ./authentication
+      dockerfile: Dockerfile
+    container_name: authentication_service
+    ports:
+      - ":5000"  # Porta esterna (host) 5001 mappata sulla porta interna del container 5000
+    volumes:
+      - sqldata1:/data  # Volume sqldata1 montato all'interno della cartella /data nel container
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: $(SECRET_KEY)
+    secrets:
+      - auth_secrets_cert
+      - auth_secrets_key
+    networks:
+      - app-network
+
+  gacha_service:
+    build:
+      context: ./gacha_service
+      dockerfile: Dockerfile
+    container_name: gacha_service
+    ports:
+      - ":5000"  # Porta esterna (host) 5002 mappata sulla porta interna del container 5000
+    volumes:
+      - sqldata2_GachaManager:/data  # Volume sqldata2_GM montato all'interno della cartella /data nel container
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: $(SECRET_KEY)
+    depends_on:
+      - authentication
+    secrets:
+      - gacha_service_secrets_cert
+      - gacha_service_secrets_key  
+    networks:
+      - app-network
+      #- admin-network
+
+  gacha_market_service:
+    build:
+      context: ./gacha_market_service
+      dockerfile: Dockerfile
+    container_name: gacha_market_service
+    ports:
+      - ":5000"  # Porta esterna (host) 5003 mappata sulla porta interna del container 5000
+    volumes:
+      - sqldata3_GachaMarket:/data  # Volume sqldata2_GM montato all'interno della cartella /data nel container
+      - ./images:/app/images
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: $(SECRET_KEY)
+    depends_on:
+      - authentication
+      - gacha_service
+    secrets:
+      - gacha_market_service_secrets_cert
+      - gacha_market_service_secrets_key
+    networks:
+      - app-network
+
+  auction_service:
+    build:
+      context: ./auction_service
+      dockerfile: Dockerfile
+    container_name: auction_service
+    ports:
+      - ":5000"  # Porta esterna (host) 5004 mappata sulla porta interna del container 5000
+    volumes:
+      - sqldata4_Auctions:/data  
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: $(SECRET_KEY)
+    depends_on:
+      - authentication
+      - gacha_service
+      - gacha_market_service
+    secrets:
+      - auction_service_secrets_cert
+      - auction_service_secrets_key
+    networks:
+      - app-network
+
+
+
+    
+
+
+
+  admin_service:  ## ADMIN SERVICE
+    build:
+      context: ./admin_service
+      dockerfile: Dockerfile
+    container_name: admin_service
+    ports:
+      - "5004:5000"  # Porta esterna (host) 5003 mappata sulla porta interna del container 5000
+    volumes:
+      - sqldata4_admin_service:/data  # Volume sqldata2_GM montato all'interno della cartella /data nel container
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: $(SECRET_KEY)
+    depends_on:
+      - authentication
+      - gacha_service
+      - gacha_market_service
+      - auction_service
+    secrets:
+      - admin_service_secrets_cert
+      - admin_service_secrets_key
+    networks:
+      - app-network
+      - admin-network
+
+
+
+  user-nginx: ## USER NGINX
+    image: nginx:latest
+    container_name: user_nginx_gateway
+    ports:
+      - "443:443"
+      - "80:80"  
+    volumes:
+      - ./nginx/user:/etc/nginx/conf.d  
+      - ./keys/user-nginx:/etc/nginx/ssl
+      - ./frontend:/usr/share/nginx/html:ro        
+    depends_on:
+      - authentication
+      - gacha_service
+      - gacha_market_service
+      - auction_service
+    networks:
+      - app-network
+      - public-network
+
+  admin-nginx: ##ADMIN NGINX
+    image: nginx:latest
+    container_name: admin_nginx_gateway
+    ports:
+      - "444:443"
+      - "81:80"  
+    volumes:
+      - ./nginx/admin:/etc/nginx/conf.d  
+      - ./keys/admin-nginx:/etc/nginx/ssl  
+     
+
+    depends_on:
+      - authentication
+      - gacha_service
+      - gacha_market_service
+      - auction_service
+    networks:
+      - admin-network
+
+
+
+
+volumes:
+  sqldata1:
+    driver: local
+  sqldata2_GachaManager:
+    driver: local
+  sqldata3_GachaMarket:
+    driver: local
+  sqldata4_Auctions:
+    driver: local
+  sqldata4_admin_service:
+    driver: local
+
+
+networks:
+  app-network:
+    driver: bridge
+  public-network:
+    driver: bridge
+  admin-network:
+    driver: bridge
+
+
+secrets:
+    auth_secrets_cert:
+      file: ./keys/auth_service/cert.pem
+    auth_secrets_key:
+      file: ./keys/auth_service/key.pem
+    gacha_service_secrets_cert:
+      file: ./keys/gacha_service/cert.pem
+    gacha_service_secrets_key:
+      file: ./keys/gacha_service/key.pem
+    gacha_market_service_secrets_cert:
+      file: ./keys/gacha_market_service/cert.pem
+    gacha_market_service_secrets_key:
+      file: ./keys/gacha_market_service/key.pem
+    auction_service_secrets_cert:
+      file: ./keys/auction_service/cert.pem
+    auction_service_secrets_key:
+      file: ./keys/auction_service/key.pem
+    admin_service_secrets_cert:
+      file: ./keys/admin_service/cert.pem
+    admin_service_secrets_key:
+      file: ./keys/admin_service/key.pem
